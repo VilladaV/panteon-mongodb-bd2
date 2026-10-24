@@ -1,0 +1,212 @@
+% =====================================================================
+%  panteon-mongodb-bd2 · Artículo científico (Entregable 7)
+%
+%  Revista : IEEE/ACM Transactions on Computational Biology and
+%            Bioinformatics (TCBB)
+%  Plantilla: IEEEtran, modo journal (dos columnas, 10 pt, carta)
+%  Normas  : ver ../JOURNAL.md
+%
+%  Compilación:
+%      pdflatex main
+%      bibtex   main
+%      pdflatex main
+%      pdflatex main
+% =====================================================================
+\documentclass[journal]{IEEEtran}
+
+% ------------------------- Idioma y codificación ---------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-noshorthands]{babel}
+
+% ------------------------- Matemáticas y gráficos --------------------
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}          % tablas limpias, sin líneas verticales
+\usepackage{url}
+
+% ------------------------- Hipervínculos (al final) ------------------
+\usepackage[hidelinks]{hyperref}
+
+\graphicspath{{figures/}}
+
+% ------------------------- Nombres traducidos ------------------------
+% IEEEtran fija estos rótulos en inglés; se traducen para el manuscrito
+% en español sin romper la plantilla.
+\renewcommand{\abstractname}{Resumen}
+\renewcommand{\IEEEkeywordsname}{Palabras clave}
+\renewcommand{\tablename}{TABLA}
+
+\hypersetup{
+  pdftitle={Modelo documental en MongoDB para elementos transponibles y perfiles de k-mers},
+  pdfkeywords={bioinformática, elementos transponibles, k-mers, modelado de datos, MongoDB, NoSQL},
+  pdfsubject={Bases de Datos II -- Universidad Autónoma de Manizales}
+}
+
+% =====================================================================
+\begin{document}
+
+\title{Diseño y evaluación experimental de un modelo documental en MongoDB
+para elementos transponibles y perfiles de \textit{k}-mers}
+
+% NOTA: reemplazar los marcadores por los nombres reales del equipo.
+\author{
+  Johan Andrés Villada Valencia, \textit{Integrante 2}, \textit{Integrante 3} y \textit{Integrante 4}%
+  \thanks{Proyecto del segundo corte de Bases de Datos II, Programa de Ingeniería de
+  Sistemas, Universidad Autónoma de Manizales, Manizales, Colombia. Docente: Simón
+  Gaviria Orrego.}%
+  \thanks{Los datos utilizados provienen de PanTEon Database v1.6.1 (Zenodo, licencia
+  CC BY 4.0).}%
+}
+
+\maketitle
+
+% ---------------------------------------------------------------------
+% RESUMEN · 100--200 palabras, un solo párrafo, sin referencias ni
+% ecuaciones (norma TCBB para artículo regular).
+% Estructura sugerida: (1) problema, (2) qué se diseñó e implementó,
+% (3) resultados medidos, (4) conclusión.
+% ---------------------------------------------------------------------
+\begin{abstract}
+[Pendiente de redacción por el equipo.]
+\end{abstract}
+
+% ---------------------------------------------------------------------
+% PALABRAS CLAVE · 3--6 términos, en orden alfabético.
+% ---------------------------------------------------------------------
+\begin{IEEEkeywords}
+bioinformática, bases de datos NoSQL, elementos transponibles, \textit{k}-mers,
+modelado de datos, MongoDB
+\end{IEEEkeywords}
+
+% =====================================================================
+\section{Introducción}
+% Qué son los TEs y por qué ocupan una fracción enorme de muchos genomas.
+% El reto: almacenar y consultar ~240.000 secuencias junto con sus perfiles
+% de k-mers (hasta 5.460 valores por secuencia) sin depender de archivos
+% planos de ~1 GB.
+% Vacío de conocimiento: PanTEon publica FASTA + CSV; no hay motor de
+% consulta que integre secuencias, taxonomía y perfiles.
+% Objetivo del trabajo y aportes (3 viñetas).
+% Citar aquí: \cite{orozco2026panteon} y \cite{panteon2026zenodo}.
+% =====================================================================
+
+% =====================================================================
+\section{Trabajo relacionado}
+% Cómo organizan esta información otras bases de datos:
+%   - Dfam: base de datos de referencia de TEs (familias curadas).
+%   - PanTEon: marco cross-kingdom; publica datos como archivos planos
+%     + modelos entrenados, sin capa de consulta estructurada.
+%   - Bases documentales/NoSQL aplicadas a genómica.
+% Cerrar con el vacío que cubre este trabajo.
+% =====================================================================
+
+% =====================================================================
+\section{Materiales y métodos}
+
+\subsection{Datos y problemas de calidad}
+% Fuente (Zenodo v1.6.1), licencia, tamaños reales.
+% Estructura del encabezado FASTA: >ID#CLASE/ORDEN/SUPERFAMILIA @Especie
+% Las 9 columnas conservadas del CSV y las 4 descartadas.
+% Colisión de nombres: Class/Order taxonómicos vs. clase/orden del TE.
+% Inconsistencias encontradas: huérfanos FASTA<->CSV, nombres repetidos,
+% valores faltantes. Tabla con conteos.
+% Política de N y caracteres fuera de {A,C,G,T}.
+
+\subsection{Modelo de datos y decisiones de diseño}
+% Colecciones, campos y relaciones. Diagrama (figura).
+% Embebido vs. referencia, con la alternativa descartada y el motivo.
+% Jerarquía del TE y jerarquía taxonómica como estructuras distintas.
+% Representación de los k-mers (la decisión central).
+% Uso de _id ObjectId + identificador original indexado.
+% $jsonSchema: en qué colecciones y por qué.
+% Tabla de índices: índice -> consulta que lo justifica.
+
+\subsection{Pipeline de procesamiento}
+% Etapas, procesamiento por lotes, inserciones masivas, idempotencia
+% (poder re-ejecutar sin duplicar) y entornos (Colab/local).
+
+\subsection{Diseño experimental}
+% Estrategias A y B comparadas; variables controladas; métricas
+% (tiempo de carga, collStats, explain executionStats con y sin índice);
+% número de repeticiones y cómo se evita el sesgo de caché.
+
+% =====================================================================
+\section{Resultados}
+
+\subsection{Consultas analíticas y generación de bibliotecas}
+% Consultas 1--15 y las 2 preguntas propias: pregunta, resultado e
+% interpretación. Incluir las bibliotecas .fasta exportadas (10 y 11).
+
+\subsection{Evaluación experimental del almacenamiento de \textit{k}-mers}
+% Tabla comparativa de las dos estrategias y gráficos de tiempo/espacio.
+% Planes de ejecución con y sin índice.
+
+\subsection{Visualización y perfiles genómicos}
+% Figuras 1--4 de la §4.5, cada una con su interpretación en el texto:
+%   Fig. 1 composición por reino / orden
+%   Fig. 2 boxplot de longitud por orden de TE
+%   Fig. 3 contenido GC por reino
+%   Fig. 4 heatmap de los 16 dinucleótidos por orden de TE
+
+% ---------------------------------------------------------------------
+% Ejemplos de figura y tabla (descomentar cuando existan los archivos).
+%
+% \begin{figure}[!t]
+%   \centering
+%   \includegraphics[width=\columnwidth]{figura1.pdf}
+%   \caption{Composición de elementos transponibles por orden en cada reino.}
+%   \label{fig:composicion}
+% \end{figure}
+%
+% \begin{table}[!t]
+%   \caption{Comparación de las dos estrategias de almacenamiento de k-mers.}
+%   \label{tab:benchmark}
+%   \centering
+%   \begin{tabular}{lrr}
+%     \toprule
+%     Estrategia & Tiempo de carga (s) & Tamaño (MB) \\
+%     \midrule
+%     A & -- & -- \\
+%     B & -- & -- \\
+%     \bottomrule
+%   \end{tabular}
+% \end{table}
+% ---------------------------------------------------------------------
+
+% =====================================================================
+\section{Discusión}
+% Ventajas y limitaciones del diseño elegido.
+% Qué cambiaría si el volumen creciera 10x y 100x (sharding, colección
+% de perfiles comprimida, agregaciones incremental).
+% Amenazas a la validez: sesgo del subconjunto de prueba, entorno de
+% ejecución, variabilidad de la red, comparaciones no pareadas.
+% =====================================================================
+
+% =====================================================================
+\section{Conclusiones}
+% Respuesta directa a los objetivos. Qué se demostró con mediciones
+% propias, no con afirmaciones.
+% =====================================================================
+
+% =====================================================================
+\section*{Disponibilidad de datos y código}
+% Enlace al repositorio del equipo y pasos para reproducir:
+% https://github.com/VilladaV/panteon-mongodb-bd2
+% Indicar cómo se obtienen los datos (Zenodo), cómo se levanta MongoDB
+% y qué notebook genera cada resultado.
+% =====================================================================
+
+% =====================================================================
+% REFERENCIAS
+% \nocite fuerza la aparición de las dos citas obligatorias mientras el
+% cuerpo del artículo aún no las referencia. Eliminar cuando ambas estén
+% citadas en el texto.
+% =====================================================================
+\nocite{orozco2026panteon,panteon2026zenodo}
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}

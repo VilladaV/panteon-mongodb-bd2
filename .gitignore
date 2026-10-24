@@ -1,0 +1,61 @@
+# =====================================================================
+#  panteon-mongodb-bd2  ·  .gitignore
+#  Regla del repo: solo entra lo que sea reproducible o liviano.
+#  Los datos crudos se descargan desde Zenodo (ver README, seccion 6.2).
+# =====================================================================
+
+# --- 1. Datos crudos de Zenodo (NO versionar) -------------------------
+# FASTA ~946 MiB y CSV ~363 KiB. GitHub rechaza archivos > 100 MB.
+data_raw/
+PanTEon_Database_v1.6.1.fasta
+PanTEon_Database_v1.6.1_benchmark_edition.fasta
+PanTEon_Database_metadata_v1.6.1.csv
+*.zip
+
+# --- 2. Entornos y caches de Python / Jupyter -------------------------
+venv/
+.venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.env
+.ipynb_checkpoints/
+.DS_Store
+Thumbs.db
+
+# --- 3. MongoDB local -------------------------------------------------
+# Si mongod se levanta con el dbpath dentro del repo (p. ej. en Colab
+# montando Drive), esos archivos no se versionan.
+mongo_data/
+mongod.log
+*.bson
+*.bson.gz
+*.archive
+
+# --- 4. LaTeX ---------------------------------------------------------
+# Se conservan main.tex, references.bib y main.pdf (entregable 7).
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.toc
+paper/*.bbl
+paper/*.blg
+paper/*.fls
+paper/*.fdb_latexmk
+paper/*.spl
+paper/*.synctex.gz
+
+# --- 5. Resultados intermedios pesados --------------------------------
+# Las tablas y figuras finales SI se versionan; los dumps crudos no.
+results/*.csv.gz
+results/*.json.gz
+
+# ---------------------------------------------------------------------
+# NOTA sobre libraries/  (entregable 6)
+# Las bibliotecas .fasta generadas por las consultas 10 y 11 SI deben
+# subirse, por eso NO se ignoran. Cuidado: una biblioteca de reino
+# completo puede superar los 100 MB y GitHub la rechaza. Documenten en
+# el README el criterio de tamano usado (p. ej. especies con >= N
+# secuencias, o las 5 especies del subconjunto de prueba).
+# ---------------------------------------------------------------------

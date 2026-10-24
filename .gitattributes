@@ -1,0 +1,12 @@
+# Normaliza finales de línea: el repo se trabaja en Windows y se ejecuta
+# en Linux (Google Colab). Sin esto, cada archivo aparece modificado al
+# cambiar de sistema.
+* text=auto eol=lf
+
+*.pdf   binary
+*.png   binary
+*.jpg   binary
+*.zip   binary
+
+*.ipynb text eol=lf
+*.fasta text eol=lf
