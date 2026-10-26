@@ -30,15 +30,15 @@ Línea de base del problema:
 
 ---
 
-## 2. Autores
+## 2. Equipo y reparto del trabajo
 
 
-| Integrante                       | Rol principal                                 | Contacto |
-| -------------------------------- | --------------------------------------------- | -------- |
-| Johan Andrés Villada Valencia    | Arquitectura de datos, repositorio y artículo | —        |
-| María Camila Prada Cortes        | -                                             | —        |
-| *Cristian Camilo Arenas Salazar* | -                                             | —        |
-| Santiago Jimenez Cotrini         | -                                             |          |
+| Integrante                     | Parte                                                     | Estado   |
+| ------------------------------ | --------------------------------------------------------- | -------- |
+| María Camila Prada Cortes      | 1 · Limpieza del CSV, parseo del FASTA, cruce y atributos | Listo    |
+| Santiago Jimenez Cotrini       | 2 · motor de k-mers, carga masiva y benchmark             | —        |
+| Cristian Camilo Arenas Salazar | 3 · consultas 1–9 y 15, y figuras                         | —        |
+| Johan Andrés Villada Valencia  | 4 · Modelo de datos, repositorio y artículo               | En curso |
 
 
 ---
@@ -66,7 +66,7 @@ panteon-mongodb-bd2/
 ├── .gitignore                         # 
 │
 ├── notebooks/
-│   ├── 01_pipeline_extraccion.ipynb   # 2 · limpieza, cruce, k-mers y carga
+│   ├── 01_exploracion_limpieza_normalizacion_cruce.ipynb   # 2 · limpieza, cruce y atributos
 │   ├── 02_consultas_y_figuras.ipynb   # 3 · consultas y figuras de la §4.5
 │   └── 03_experimentos_diseno.ipynb   # 4 · evaluación experimental (§4.4)
 │
@@ -87,11 +87,11 @@ panteon-mongodb-bd2/
 ## 5. Rol de cada notebook
 
 
-| Notebook                       | Contenido mínimo exigido por la guía                                                                                                                                                                                                                                                           |
-| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `01_pipeline_extraccion.ipynb` | Lectura y validación del FASTA (encabezado, caracteres válidos, `N`, longitudes) · limpieza del CSV (9 columnas) · cruce por especie y reporte de huérfanos en ambos sentidos · atributos derivados (longitud, %GC, %N) · cálculo de *k*-mers *k* = 1…6 · carga con `insert_many`/`bulk_write` |
-| `02_consultas_y_figuras.ipynb` | Consultas 1–15 + 2 preguntas propias, cada una con pregunta, código, resultado e interpretación · las 4 figuras de la §4.5 leídas desde MongoDB                                                                                                                                                |
-| `03_experimentos_diseno.ipynb` | Dos estrategias de almacenamiento de *k*-mers · tiempo de carga · `collStats` · 3 consultas con y sin índice usando `explain("executionStats")` · tablas y gráficos comparativos                                                                                                               |
+| Notebook                                            | Contenido mínimo exigido por la guía                                                                                                                                                                                    |
+| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `01_exploracion_limpieza_normalizacion_cruce.ipynb` | Lectura y validación del FASTA (encabezado, caracteres válidos, `N`, longitudes) · limpieza del CSV (9 columnas) · cruce por especie y reporte de huérfanos en ambos sentidos · atributos derivados (longitud, %GC, %N) |
+| `02_consultas_y_figuras.ipynb`                      | Consultas 1–15 + 2 preguntas propias, cada una con pregunta, código, resultado e interpretación · las 4 figuras de la §4.5 leídas desde MongoDB                                                                         |
+| `03_experimentos_diseno.ipynb`                      | Dos estrategias de almacenamiento de *k*-mers · tiempo de carga · `collStats` · 3 consultas con y sin índice usando `explain("executionStats")` · tablas y gráficos comparativos                                        |
 
 
 ---
