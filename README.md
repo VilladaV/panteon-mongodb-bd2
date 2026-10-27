@@ -36,8 +36,8 @@ Línea de base del problema:
 | Integrante                     | Parte                                                     | Estado   |
 | ------------------------------ | --------------------------------------------------------- | -------- |
 | María Camila Prada Cortes      | 1 · Limpieza del CSV, parseo del FASTA, cruce y atributos | Listo    |
-| Santiago Jimenez Cotrini       | 2 · motor de k-mers, carga masiva y benchmark             | —        |
-| Cristian Camilo Arenas Salazar | 3 · consultas 1–9 y 15, y figuras                         | —        |
+| Santiago Jimenez Cotrini       | 2 · motor de k-mers, carga masiva, benchmark y consulta 15 | En curso |
+| Cristian Camilo Arenas Salazar | 3 · consultas 1–9 y figuras                               | En curso |
 | Johan Andrés Villada Valencia  | 4 · Modelo de datos, repositorio y artículo               | En curso |
 
 
@@ -90,8 +90,12 @@ panteon-mongodb-bd2/
 | Notebook                                            | Contenido mínimo exigido por la guía                                                                                                                                                                                    |
 | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `01_exploracion_limpieza_normalizacion_cruce.ipynb` | Lectura y validación del FASTA (encabezado, caracteres válidos, `N`, longitudes) · limpieza del CSV (9 columnas) · cruce por especie y reporte de huérfanos en ambos sentidos · atributos derivados (longitud, %GC, %N) |
-| `02_consultas_y_figuras.ipynb`                      | Consultas 1–15 + 2 preguntas propias, cada una con pregunta, código, resultado e interpretación · las 4 figuras de la §4.5 leídas desde MongoDB                                                                         |
+| `02_consultas_y_figuras.ipynb`                      | Consultas 1–9, cada una con pregunta, código, resultado e interpretación · las 4 figuras de la §4.5 leídas desde MongoDB                                                                         |
 | `03_experimentos_diseno.ipynb`                      | Dos estrategias de almacenamiento de *k*-mers · tiempo de carga · `collStats` · 3 consultas con y sin índice usando `explain("executionStats")` · tablas y gráficos comparativos                                        |
+
+Las consultas 10–14 (bibliotecas `.fasta` por especie y reino y comparación Dfam vs.
+RM2+MCH) las aporta la parte 1; la consulta 15, la parte 2. Las dos preguntas propias se
+formulan entre las partes 1 y 4.
 
 
 ---
