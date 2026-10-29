@@ -13,7 +13,10 @@ Esta carpeta contiene los scripts que acompañan la carga y la validación de
 ## Respaldo y restauración
 
 El respaldo completo no se versiona porque supera los 1,5 GB comprimidos y
-contiene los datos de PanTEon. Para generarlo desde una base ya cargada:
+contiene los datos de PanTEon. Está disponible en Google Drive:
+<https://drive.google.com/file/d/1m87QBBLpmaZzQq3VsHkd6VCQtp4fZlQU/view?usp=sharing>.
+
+Para generarlo desde una base ya cargada:
 
 ```bash
 mongodump --db panteon_db --archive=panteon_db.archive --gzip

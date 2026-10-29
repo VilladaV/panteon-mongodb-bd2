@@ -51,6 +51,10 @@ paper/*.synctex.gz
 results/*.csv.gz
 results/*.json.gz
 
+# --- 6. Borrador y previsualizaciones (no forman parte del entregable) --
+paper/borrador.md
+paper/preview/
+
 # ---------------------------------------------------------------------
 # NOTA sobre libraries/  (entregable 6)
 # Las bibliotecas .fasta generadas por las consultas 10 y 11 SI deben
