@@ -7,7 +7,7 @@
 ## 1. Avance del pipeline de limpieza
 
 **Responsable:** María Camila Prada Cortes.
-**Notebook:** `notebooks/01_exploracion_limpieza_normalizacion_cruce.ipynb` (73 celdas).
+**Notebook:** `notebooks/01_exploracion_limpieza_normalizacion_cruce.ipynb` (74 celdas).
 **Commits:** `30a2a2d`, `803aced`, `34532a6` sobre `develop`.
 
 ### 1.1 Etapas implementadas
@@ -105,11 +105,11 @@ No se corrigieron: son datos de origen y se reportan como parte del análisis de
 | D-03 | Unificar `tRNA` → `TRNA` en superfamilia                              | Dejarlas separadas                                           | Misma entidad con dos grafías; 56 registros quedaban aislados                                               | Camila |
 | D-04 | Normalizar especies con `strip()` + eliminar `.`                      | Usar el nombre crudo                                         | Es la única forma en que cruzan las 2.790                                                                   | Camila |
 | D-05 | `es_especie` como bandera booleana                                    | Borrar las 44 filas                                          | Tienen secuencias en el FASTA; además se necesitan para la consulta 14                                      | **-**  |
-| D-06 | Tres colecciones: `species`, `sequences`, `kmers`                     | Documento único con todo                                     | Los perfiles de k-mers son el 90 % del volumen y no se usan en las consultas analíticas                     | Equipo |
+| D-06 | Tres colecciones: `species`, `sequences`, `kmers`                     | Documento único con todo                                     | Los perfiles de k-mers concentran la mayor parte del volumen (3,47 GB) y no se usan en las consultas analíticas | Equipo |
 | D-07 | Referencia `species_id` + *extended reference* (`especie`, `especie_original`, `kingdom`) | Solo referencia, o taxonomía completa embebida               | Evita un `$lookup` en las consultas por reino y en la exportación `.fasta`; solo se paga en consultas 12/13 | Equipo |
 | D-08 | k-mers en colección aparte, un documento por secuencia y por `k`      | Embebidos en `sequences`, o un documento único con los 6 `k` | Permite traer solo el `k` pedido (consulta 15) y comparar estrategias en la §4.4                            | Equipo |
 | D-09 | Diccionario **disperso** (`counts` solo con k-mers presentes)         | Arreglo denso de 5.460 posiciones                            | En secuencias cortas la mayoría de k-mers no aparece; el denso paga ceros                                   | Equipo |
-| D-10 | Descartar ventanas que contengan `N` y registrar `valid_windows`      | Contar `N` como base, o descartar la secuencia completa      | 22,85 % de las secuencias tiene alguna `N`; descartarlas perdería un cuarto del corpus                      | Equipo |
+| D-10 | Descartar ventanas con bases fuera de `A`, `C`, `G` y `T` y registrar `valid_windows`      | Contar `N` como base, o descartar la secuencia completa      | 22,85 % de las secuencias tiene alguna `N`; descartarlas perdería un cuarto del corpus                      | Equipo |
 | D-11 | `_id` ObjectId + `id_seq` como campo indexado                         | Usar `id_seq` como `_id`                                     | Lo exige la guía (§4.1)                                                                                     | Equipo |
 | D-12 | `tax_class` / `tax_order` vs. `clase_fasta` / `orden_fasta`           | `class` / `order` en ambos niveles                           | Evita la colisión que advierte la guía                                                                      | Equipo |
 
@@ -202,24 +202,26 @@ instancia con datos (README §6.5).
 | `kmers`     | `{sequence_id: 1}`                          | `$lookup` de la Figura 4   |
 
 
-**Estado de implementación (2026-10-29).** La corrida del benchmark creó
-`{id_seq: 1, k: 1}` y `{k: 1, valid_windows: 1}` sobre `kmers`. El resto se concentra en
-`database/indices.js`, que se ejecuta después de la carga; así la creación no queda
-repartida entre celdas del notebook.
+**Estado de implementación (2026-10-29).** El notebook 03 elimina los índices secundarios
+de `kmers` antes de medir la línea base y, al terminar, recrea `{id_seq: 1, k: 1}` (único)
+y `{k: 1, valid_windows: 1}` con los mismos nombres y opciones de `database/indices.js`.
+El resto de los índices se concentra en ese script, que se ejecuta después de la carga y
+puede repetirse sin conflicto.
 
 
 ---
 
 ## 5. Decisiones de diseño: cierre
 
-### D-13 · `$jsonSchema` — resuelta (2026-10-29)
+### D-13 · `$jsonSchema` (2026-10-29)
 
-**Contexto.** La guía pregunta si se usa validación de esquema y para qué colecciones.
-La base ya estaba poblada cuando se definió la validación, así que debía aplicarse sin
+**Contexto.** Se pregunta si se usa validación de esquema y para qué colecciones.  
+La base ya estaba poblada cuando se definió la validación, así que debía aplicarse sin  
 recrear las colecciones.
 
-**Alternativas.** A) No validar y confiar en el pipeline; B) crear las colecciones desde
-cero con validador; C) aplicar `collMod` sobre las colecciones existentes.
+**Alternativas.** A) Validar solo en la aplicación, con comprobaciones en Python antes de
+cada inserción; B) crear las colecciones desde cero con validador; C) aplicar `collMod`
+sobre las colecciones existentes.
 
 **Decisión.** C) Validación estricta en las tres colecciones con
 `validationLevel: "strict"` y `validationAction: "error"`, mediante el script
@@ -245,7 +247,7 @@ existentes cumplen el esquema.
 ejecución está en README §6.5. Evidencia: `database/schema_validation.py` y
 `database/migrar_especie_original.py`.
 
-### D-14 · Nombre normalizado vs. nombre original de la especie — resuelta (2026-10-29)
+### D-14 · Nombre normalizado vs. nombre original de la especie (2026-10-29)
 
 **Contexto.** La llave de cruce `especie` se guarda sin puntos (`Coccomyxa sp obi`), pero
 el encabezado del FASTA conserva el punto (`@Coccomyxa sp. obi`). Si se exporta la
@@ -267,10 +269,10 @@ el nombre del FASTA antes de normalizar. Para una base ya cargada,
 `database/migrar_especie_original.py` copia `especie` a `especie_original` en todos los
 documentos y aplica el mapeo de `database/especies_originales.csv`; el esquema lo exige.
 
-### D-15 · Preguntas propias — resuelta (2026-10-29)
+### D-15 · Preguntas propias (2026-10-29)
 
-**Contexto.** La guía exige al menos dos preguntas propias además de las 15 consultas
-obligatorias. Debían ser respondibles con el modelo cargado y no repetir los conteos de
+**Contexto.** Se exige al menos dos preguntas propias además de las 15 consultas  
+obligatorias. Debían ser respondibles con el modelo cargado y no repetir los conteos de  
 las consultas 1–9.
 
 **Alternativas consideradas.** A) Sesgo por bases `N`; B) concentración de secuencias en
@@ -295,6 +297,28 @@ Dfam es 99,88 % Animalia. La pregunta 2 encontró que TT, GG, AA, AT y CC son lo
 dinucleótidos de mayor rango, y que TIR–HELITRON (0,982) y LTR–LINE (0,962) forman los
 pares de órdenes más parecidos. Resultados en `paper/borrador.md` §IV-E; el cálculo se
 reproduce con `notebooks/preguntas_propias.py`.
+
+### D-16 · Protocolo del benchmark e índices de `kmers` (2026-10-29)
+
+**Contexto.** La primera corrida midió la línea base sin índices con los índices
+`{id_seq, k}` y `{k, valid_windows}` ya creados, así que Q1 y Q2 de la estrategia A dieron
+0 ms. Además, el notebook creaba esos índices sin nombre y sin la opción `unique`; al
+ejecutar después `database/indices.js`, MongoDB rechazaba la creación por conflicto de
+opciones y la colección quedaba sin la restricción de unicidad que exige el modelo.
+
+**Alternativas.** A) Reportar solo el espacio y no medir tiempos; B) crear los índices del
+benchmark en colecciones temporales aparte; C) eliminar los índices secundarios antes de
+la línea base y recrearlos al final con los nombres y opciones de producción.
+
+**Decisión.** C). El notebook 03 elimina los índices secundarios de `kmers`, hace un
+calentamiento y tres repeticiones por consulta, reporta la mediana de
+`executionTimeMillis`, `totalDocsExamined` y `totalKeysExamined`, y recrea
+`uq_kmers_id_seq_k` (único) e `ix_kmers_k_valid_windows` con los mismos nombres de
+`indices.js`.
+
+**Consecuencias.** El orden README §6.4 → §6.5 deja de fallar y la unicidad de
+`{id_seq, k}` queda garantizada. Si el notebook se interrumpe después de eliminar los
+índices, hay que volver a ejecutarlo o correr `indices.js` antes de usar la base.
 
 ---
 

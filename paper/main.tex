@@ -54,9 +54,9 @@
 \title{Diseño y evaluación experimental de un modelo documental en MongoDB
 para elementos transponibles y perfiles de \textit{k}-mers}
 
-% NOTA: reemplazar los marcadores por los nombres reales del equipo.
 \author{
-  Johan Andrés Villada Valencia, \textit{Integrante 2}, \textit{Integrante 3} y \textit{Integrante 4}%
+  Johan Andrés Villada Valencia, María Camila Prada Cortes,
+  Santiago Jimenez Cotrini y Cristian Camilo Arenas Salazar%
   \thanks{Proyecto del segundo corte de Bases de Datos II, Programa de Ingeniería de
   Sistemas, Universidad Autónoma de Manizales, Manizales, Colombia. Docente: Simón
   Gaviria Orrego.}%
@@ -73,7 +73,21 @@ para elementos transponibles y perfiles de \textit{k}-mers}
 % (3) resultados medidos, (4) conclusión.
 % ---------------------------------------------------------------------
 \begin{abstract}
-[Pendiente de redacción por el equipo.]
+Los elementos transponibles (TEs) ocupan una fracción importante de los genomas
+eucariotas y su estudio exige bibliotecas de secuencias cada vez mayores. PanTEon
+Database reúne 239.946 secuencias de animales, plantas y hongos, pero las publica como
+archivos planos ---un FASTA de 946 MiB y un CSV de 363 KiB--- sin una capa de consulta que
+integre secuencias, taxonomía y perfiles de \textit{k}-mers. Este trabajo diseña e
+implementa un modelo documental en MongoDB de tres colecciones, con referencias por
+\texttt{ObjectId}, desnormalización controlada y validación con \texttt{\$jsonSchema}. El
+corpus cargado contiene 2.790 especies, 239.946 secuencias y 1.439.676 perfiles de
+\textit{k}-mers (\textit{k} = 1\ldots6). Las consultas
+analíticas y dos preguntas propias, resueltas con agregaciones, muestran que CLASSI
+concentra el 81,2\,\% de las secuencias, que LTR, LINE y TIR reúnen el 93,4\,\% y que
+Plantae está dominada por LTR mientras Animalia lo está por LINE. Comparar dos estrategias
+de almacenamiento muestra que agrupar los seis perfiles por secuencia reduce el espacio en
+disco 6,3\,\% y simplifica los índices. El modelo permite
+exportar bibliotecas FASTA por especie o reino sin reprocesar el archivo de origen.
 \end{abstract}
 
 % ---------------------------------------------------------------------
@@ -149,6 +163,7 @@ modelado de datos, MongoDB
   \_id: ObjectId \hfill \textbf{[PK]}\\
   especie: string \hfill \textbf{[UK]}\\
   es\_especie: bool\\
+  especie\_original: string\\
   \textbf{taxonomy:} \{ \hfill \textit{[embedded]}\\
   \quad kingdom: string\\
   \quad phylum: string | null\\
@@ -169,6 +184,7 @@ modelado de datos, MongoDB
   id\_seq: string \hfill \textbf{[UK]}\\
   species\_id: ObjectId \hfill \textbf{[FK]}\\
   especie: string \hfill \textit{[ext. ref]}\\
+  especie\_original: string\\
   kingdom: string \hfill \textit{[ext. ref]}\\
   \textbf{te\_classification:} \{ \hfill \textit{[embedded]}\\
   \quad clase\_fasta: string\\
@@ -281,11 +297,11 @@ modelado de datos, MongoDB
 
 % =====================================================================
 % REFERENCIAS
-% \nocite fuerza la aparición de las dos citas obligatorias mientras el
-% cuerpo del artículo aún no las referencia. Eliminar cuando ambas estén
-% citadas en el texto.
+% \nocite fuerza la aparición de las dos citas obligatorias y la de Dfam
+% mientras el cuerpo del artículo aún no las referencia. Eliminar cuando
+% estén citadas en el texto.
 % =====================================================================
-\nocite{orozco2026panteon,panteon2026zenodo}
+\nocite{orozco2026panteon,panteon2026zenodo,storer2021dfam}
 
 \bibliographystyle{IEEEtran}
 \bibliography{references}

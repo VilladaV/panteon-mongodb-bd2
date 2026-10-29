@@ -75,14 +75,18 @@ panteon-mongodb-bd2/
 │   ├── README.md
 │   ├── schema_validation.py
 │   ├── indices.js
-│   └── migrar_especie_original.py
+│   ├── migrar_especie_original.py
+│   └── especies_originales.csv
 ├── libraries/                         # 6 · bibliotecas .fasta (consultas 10 y 11)
 │   └── README.md
 │
 ├── paper/                             # 7 · artículo
 │   ├── main.tex
+│   ├── main.pdf
 │   ├── references.bib
 │   └── figures/
+│
+├── results/                           # salidas de la ejecución (carga_a.json)
 │
 └── docs/
     └── decisiones.md                  # bitácora de decisiones de diseño
@@ -96,13 +100,14 @@ panteon-mongodb-bd2/
 | Notebook                                            | Contenido mínimo exigido por la guía                                                                                                                                                                                    |
 | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `01_exploracion_limpieza_normalizacion_cruce.ipynb` | Lectura y validación del FASTA (encabezado, caracteres válidos, `N`, longitudes) · limpieza del CSV (9 columnas) · cruce por especie y reporte de huérfanos en ambos sentidos · atributos derivados (longitud, %GC, %N) |
-| `02_consultas_y_figuras.ipynb`                      | Consultas 1–9 y 15, cada una con pregunta, código, resultado e interpretación · consultas 10–14 en la parte 1 · las 4 figuras de la §4.5 leídas desde MongoDB                                                                         |
-| `03_experimentos_diseno.ipynb`                      | Dos estrategias de almacenamiento de *k*-mers · `collStats` · consultas con `explain("executionStats")` · tablas y gráficos comparativos; la corrida disponible es preliminar                                        |
+| `02_consultas_y_figuras.ipynb`                      | Consultas 1–9 y 15, cada una con pregunta, código, resultado e interpretación · bloque reservado para las consultas 10–14 (pendiente, parte 1) · las 4 figuras de la §4.5 leídas desde MongoDB |
+| `03_experimentos_diseno.ipynb`                      | Dos estrategias de almacenamiento de *k*-mers · `collStats` · `explain("executionStats")` con tres repeticiones y mediana · tablas y gráficos comparativos |
 
 Las consultas 10–14 (bibliotecas `.fasta` por especie y reino, `$lookup`, comparación
-Dfam vs. RM2+MCH y control de calidad) las aporta la parte 1; la consulta 15, la parte 2.
-Las dos preguntas propias están ejecutadas y sus resultados están en `paper/borrador.md`
-§IV-E.
+Dfam vs. RM2+MCH y control de calidad) están pendientes y las aporta la parte 1; el
+notebook 02 deja el bloque reservado antes de la consulta 15. La consulta 15 y las dos
+preguntas propias están ejecutadas; los resultados de las preguntas están en
+`paper/borrador.md` §IV-E y se recalculan con `notebooks/preguntas_propias.py`.
 
 
 ---
@@ -174,10 +179,10 @@ Abrir y ejecutar en orden:
 
 1. `01_exploracion_limpieza_normalizacion_cruce.ipynb`: lee `../data_raw/`, limpia, cruza, calcula los *k*-mers y carga `panteon_db`.
 2. `02_consultas_y_figuras.ipynb`: ejecuta las consultas y genera las cuatro figuras en `../paper/figures/`.
-3. `03_experimentos_diseno.ipynb`: ejecuta el experimento de almacenamiento y las consultas con `explain("executionStats")`.
+3. `03_experimentos_diseno.ipynb`: elimina los índices secundarios de `kmers`, mide las tres consultas con y sin índice, construye la estrategia B, deja nuevamente los índices de producción y exporta `benchmark_tiempos` y `benchmark_espacio` a `paper/figures/`.
 4. `python preguntas_propias.py`: recalcula las dos preguntas de la §IV-E desde MongoDB.
 
-El notebook 01 es idempotente: al inicio elimina las tres colecciones y las vuelve a crear, de modo que se puede repetir sin duplicar documentos.
+El notebook 01 es idempotente: al inicio elimina las tres colecciones y las vuelve a crear, de modo que se puede repetir sin duplicar documentos. Al terminar escribe `results/carga_a.json` con el tiempo de carga que consume el notebook 03.
 
 ### 6.5 Validar esquema e índices
 
@@ -190,7 +195,7 @@ python database/schema_validation.py
 mongosh panteon_db database/indices.js
 ```
 
-`schema_validation.py` aplica `$jsonSchema` con `validationLevel: "strict"` y `validationAction: "error"` sobre `species`, `sequences` y `kmers`. `indices.js` crea los índices de la Tabla II; para revisar un plan de ejecución:
+`schema_validation.py` aplica `$jsonSchema` con `validationLevel: "strict"` y `validationAction: "error"` sobre `species`, `sequences` y `kmers`. `indices.js` crea los índices de la Tabla II; el notebook 03 deja creados `uq_kmers_id_seq_k` e `ix_kmers_k_valid_windows` con esas mismas opciones, así que el script puede ejecutarse antes o después sin conflicto. Para revisar un plan de ejecución:
 
 ```bash
 mongosh panteon_db --eval 'db.sequences.find({id_seq:"PDB00000001"}).explain("executionStats")'
