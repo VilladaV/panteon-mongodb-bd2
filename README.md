@@ -38,7 +38,7 @@ Línea de base del problema:
 | María Camila Prada Cortes      | 1 · Limpieza, cruce, consultas 10–14, bibliotecas y preguntas propias | Listo    |
 | Santiago Jimenez Cotrini       | 2 · Motor de *k*-mers, carga y consulta 15                | Listo    |
 | Cristian Camilo Arenas Salazar | 3 · Consultas 1–9 y figuras                               | Listo    |
-| Johan Andrés Villada Valencia  | 4 · Modelo de datos, repositorio y artículo               | En curso |
+| Johan Andrés Villada Valencia  | 4 · Modelo de datos, repositorio y artículo               | Listo    |
 
 
 ---
@@ -88,7 +88,7 @@ panteon-mongodb-bd2/
 │   ├── references.bib
 │   └── figures/
 │
-├── results/                           # carga_a.json y tablas del benchmark
+├── results/                           # carga_a.json y tablas de la evaluación
 │
 └── docs/
     └── decisiones.md                  # bitácora de decisiones de diseño
@@ -110,14 +110,13 @@ Dfam vs. RM2+MCH y control de calidad) están implementadas en el notebook 02 y 
 `notebooks/consultas_analiticas.py`. Las bibliotecas de ejemplo quedaron en
 `libraries/Malus_domestica.fasta` (1.627 secuencias) y `libraries/Fungi.fasta`
 (19.797 secuencias). La consulta 15 y las dos preguntas propias también están ejecutadas;
-los resultados de las preguntas están en `paper/borrador.md` §IV-E y se recalculan con
-`notebooks/preguntas_propias.py`.
+los resultados de las preguntas se incorporan al artículo (`paper/main.tex`) §IV-E y se
+recalculan con `notebooks/preguntas_propias.py`.
 
-El benchmark de la §4.4 se ejecuta con `03_experimentos_diseno.ipynb`. La Tabla VII del
-borrador es una corrida preliminar, no citable: no incluye tiempo de carga ni Q1/Q2 con
-índice, y la línea base de A quedó contaminada por índices previos. Al ejecutar el notebook
-se generan las tablas definitivas en `results/` y las figuras del benchmark en
-`paper/figures/`.
+La evaluación experimental de la §4.4 se reproduce con `03_experimentos_diseno.ipynb`:
+el notebook construye las dos estrategias, mide espacio con `collStats`, registra los
+planes de ejecución y genera las tablas en `results/` y las figuras en `paper/figures/`.
+La Tabla VII del artículo resume la comparación de espacio entre A y B.
 
 
 ---

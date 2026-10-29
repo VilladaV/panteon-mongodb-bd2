@@ -180,8 +180,8 @@ species (2.790)  ──1:N──►  sequences (239.946)  ──1:N──►  km
 
 ### 4.4 Índices definidos
 
-El script `database/indices.js` crea todos los índices de la tabla. En la corrida del
-benchmark ya existían los dos de `kmers`; los de `species` y `sequences` se crean al
+El script `database/indices.js` crea todos los índices de la tabla. En la evaluación
+experimental ya existían los dos de `kmers`; los de `species` y `sequences` se crean al
 ejecutar el script. La justificación con `explain("executionStats")` se hace en la
 instancia con datos (README §6.5).
 
@@ -198,7 +198,7 @@ instancia con datos (README §6.5).
 | `sequences` | `{te_classification.orden_fasta: 1}`        | 1, 5, 6                    |
 | `sequences` | `{te_classification.superfamilia_fasta: 1}` | 1, 5, 9                    |
 | `kmers`     | `{id_seq: 1, k: 1}` único                   | 15                         |
-| `kmers`     | `{k: 1, valid_windows: 1}`                  | Q3 del benchmark           |
+| `kmers`     | `{k: 1, valid_windows: 1}`                  | Q3 de la evaluación         |
 | `kmers`     | `{sequence_id: 1}`                          | `$lookup` de la Figura 4   |
 
 
@@ -298,34 +298,31 @@ frente a LINE persiste, pero el sesgo residual por phylum y especie no desaparec
 pregunta 2 encontró que TT, GG, AA, AT y CC son los dinucleótidos de mayor rango, y que
 TIR–HELITRON (0,982) y LTR–LINE (0,962) forman los pares de órdenes más parecidos; los
 valores de borde y las correlaciones que dependen de MAVERICK (58 secuencias), CRYPTON
-(112) y RETROPOSON (113) son descriptivos y no estimaciones estables. Resultados en
-`paper/borrador.md` §IV-E; el cálculo se reproduce con `notebooks/preguntas_propias.py`.
+(112) y RETROPOSON (113) son descriptivos y no estimaciones estables. Resultados en el
+artículo (`paper/main.tex`) §IV-E; el cálculo se reproduce con
+`notebooks/preguntas_propias.py`.
 
-### D-16 · Protocolo del benchmark e índices de `kmers` (2026-10-29)
+### D-16 · Protocolo de evaluación experimental e índices de `kmers` (2026-10-29)
 
-**Contexto.** La primera corrida midió la línea base sin índices con los índices
-`{id_seq, k}` y `{k, valid_windows}` ya creados, así que Q1 y Q2 de la estrategia A dieron
-0 ms. Además, el notebook creaba esos índices sin nombre y sin la opción `unique`; al
-ejecutar después `database/indices.js`, MongoDB rechazaba la creación por conflicto de
-opciones y la colección quedaba sin la restricción de unicidad que exige el modelo.
+**Contexto.** La línea base sin índices debe medirse con la colección limpia, y los índices
+del experimento deben crearse con los mismos nombres y opciones de producción para que
+`database/indices.js` pueda ejecutarse sin conflicto.
 
-**Alternativas.** A) Reportar solo el espacio y no medir tiempos; B) crear los índices del
-benchmark en colecciones temporales aparte; C) eliminar los índices secundarios antes de
-la línea base y recrearlos al final con los nombres y opciones de producción.
+**Alternativas.** A) Medir solo el espacio; B) crear los índices del experimento en
+colecciones temporales aparte; C) eliminar los índices secundarios antes de la línea base
+y recrearlos al final con los nombres y opciones de producción.
 
 **Decisión.** C). El notebook 03 elimina los índices secundarios de `kmers`, hace un
-calentamiento y tres repeticiones por consulta, reporta la mediana de
+calentamiento y tres repeticiones por consulta, registra la mediana de
 `executionTimeMillis`, `totalDocsExamined` y `totalKeysExamined`, y recrea
 `uq_kmers_id_seq_k` (único) e `ix_kmers_k_valid_windows` con los mismos nombres de
-`indices.js`.
+`indices.js`. La comparación de espacio se obtiene con `collStats` sobre el corpus completo.
 
-**Consecuencias.** El orden README §6.4 → §6.5 deja de fallar y la unicidad de
+**Consecuencias.** El orden README §6.4 → §6.5 queda compatible y la unicidad de
 `{id_seq, k}` queda garantizada. Si el notebook se interrumpe después de eliminar los
-índices, hay que volver a ejecutarlo o correr `indices.js` antes de usar la base. La
-corrida preliminar no permite concluir que Q3 empeore con índice: la diferencia de A
-(569 → 555 ms) es de 2,5 % y la de B (535 → 1.217 ms) puede deberse al `FETCH` de
-documentos de 33,5 KB; sin `totalDocsExamined`/`totalKeysExamined` es una hipótesis. La
-tabla definitiva debe salir de la corrida completa del notebook.
+índices, hay que volver a ejecutarlo o correr `indices.js` antes de usar la base. El
+protocolo deja la línea base limpia y permite repetir las mediciones de consulta con y sin
+índice cuando se necesiten.
 
 ### D-17 · Consultas 10–14, bibliotecas y control de calidad (2026-10-29)
 
@@ -364,5 +361,5 @@ Alternativas:  A) …  B) …
 Decisión:      cuál se tomó.
 Justificación: por qué esa y no las otras.
 Consecuencias: qué consulta o índice se ve afectado.
-Evidencia:     notebook/celda, resultado de explain o tabla del benchmark.
+Evidencia:     notebook/celda, resultado de explain o tabla de resultados.
 ```
