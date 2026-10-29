@@ -88,7 +88,7 @@ panteon-mongodb-bd2/
 │   ├── references.bib
 │   └── figures/
 │
-├── results/                           # salidas de la ejecución (carga_a.json)
+├── results/                           # carga_a.json y tablas del benchmark
 │
 └── docs/
     └── decisiones.md                  # bitácora de decisiones de diseño
@@ -112,6 +112,12 @@ Dfam vs. RM2+MCH y control de calidad) están implementadas en el notebook 02 y 
 (19.797 secuencias). La consulta 15 y las dos preguntas propias también están ejecutadas;
 los resultados de las preguntas están en `paper/borrador.md` §IV-E y se recalculan con
 `notebooks/preguntas_propias.py`.
+
+El benchmark de la §4.4 se ejecuta con `03_experimentos_diseno.ipynb`. La Tabla VII del
+borrador es una corrida preliminar, no citable: no incluye tiempo de carga ni Q1/Q2 con
+índice, y la línea base de A quedó contaminada por índices previos. Al ejecutar el notebook
+se generan las tablas definitivas en `results/` y las figuras del benchmark en
+`paper/figures/`.
 
 
 ---
@@ -184,8 +190,8 @@ Abrir y ejecutar en orden:
 
 1. `01_exploracion_limpieza_normalizacion_cruce.ipynb`: lee `../data_raw/`, limpia, cruza, calcula los *k*-mers y carga `panteon_db`.
 2. `02_consultas_y_figuras.ipynb`: ejecuta las consultas, genera las bibliotecas en `../libraries/` y las cuatro figuras en `../paper/figures/`.
-3. `03_experimentos_diseno.ipynb`: elimina los índices secundarios de `kmers`, mide las tres consultas con y sin índice, construye la estrategia B, deja nuevamente los índices de producción y exporta `benchmark_tiempos` y `benchmark_espacio` a `paper/figures/`.
-4. `python preguntas_propias.py`: recalcula las dos preguntas de la §IV-E desde MongoDB.
+3. `03_experimentos_diseno.ipynb`: elimina los índices secundarios de `kmers`, mide tres repeticiones de las tres consultas con y sin índice, construye la estrategia B, deja nuevamente los índices de producción, exporta las tablas a `results/` y genera las figuras `benchmark_tiempos` y `benchmark_espacio` en `paper/figures/`.
+4. `python notebooks/preguntas_propias.py`: recalcula las dos preguntas de la §IV-E desde MongoDB.
 
 El notebook 01 es idempotente: al inicio elimina las tres colecciones y las vuelve a crear, de modo que se puede repetir sin duplicar documentos. Al terminar escribe `results/carga_a.json` con el tiempo de carga que consume el notebook 03.
 

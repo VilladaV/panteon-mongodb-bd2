@@ -5,9 +5,10 @@ Uso, con MongoDB activo y la base cargada:
     python notebooks/preguntas_propias.py
 
 El script imprime las tablas y los rankings que se reportan en la sección IV-E del
-artículo. La pregunta 1 usa `sequences` + `species`; la pregunta 2 reutiliza la
-agregación de la Figura 4 (`kmers` con k = 2) y calcula rangos y correlaciones en
-Python.
+artículo. La pregunta 1 usa `sequences` + `species` y se repite solo con Animalia para
+separar el efecto del reino; la pregunta 2 reutiliza la agregación de la Figura 4
+(`kmers` con k = 2), calcula rangos y correlaciones en Python y conserva el tamaño de
+muestra de los órdenes que fijan los extremos.
 """
 
 from __future__ import annotations
@@ -24,8 +25,13 @@ MONGO_URI = "mongodb://localhost:27017/"
 DB_NAME = "panteon_db"
 
 
-def pregunta_1(db) -> dict[str, object]:
-    """Composición por orden dentro de cada `library_origin.source`."""
+def pregunta_1(db, kingdom: str | None = None) -> dict[str, object]:
+    """Composición por orden dentro de cada `library_origin.source`.
+
+    Si se pasa ``kingdom``, la comparación se restringe a ese reino. Sirve para
+    repetir Dfam frente a RM2+MCH dentro de Animalia, donde ambas fuentes tienen
+    datos y el reino deja de ser una covariable.
+    """
 
     pipeline = [
         {
@@ -37,6 +43,10 @@ def pregunta_1(db) -> dict[str, object]:
             }
         },
         {"$unwind": {"path": "$sp", "preserveNullAndEmptyArrays": True}},
+    ]
+    if kingdom is not None:
+        pipeline.append({"$match": {"sp.taxonomy.kingdom": kingdom}})
+    pipeline += [
         {
             "$group": {
                 "_id": {
@@ -195,8 +205,10 @@ def pregunta_2(db, modo_prueba: bool = False) -> dict[str, object]:
 
     datos = figura_04_dinucleotidos(db, modo_prueba)["datos"]
     matriz: dict[str, np.ndarray] = {}
+    tamanos: dict[str, int] = {}
     for fila in datos:
         matriz.setdefault(fila["orden"], np.zeros(len(DINUCLEOTIDOS)))
+        tamanos[fila["orden"]] = int(fila["secuencias_validas"])
         j = DINUCLEOTIDOS.index(fila["dinucleotido"])
         matriz[fila["orden"]][j] = fila["frecuencia_promedio"]
 
@@ -216,8 +228,10 @@ def pregunta_2(db, modo_prueba: bool = False) -> dict[str, object]:
                 "media": media,
                 "orden_min": ordenes[i_min],
                 "min": float(valores[i_min]),
+                "n_orden_min": tamanos.get(ordenes[i_min], 0),
                 "orden_max": ordenes[i_max],
                 "max": float(valores[i_max]),
+                "n_orden_max": tamanos.get(ordenes[i_max], 0),
             }
         )
 
@@ -235,6 +249,7 @@ def pregunta_2(db, modo_prueba: bool = False) -> dict[str, object]:
         "matriz": {k: v.tolist() for k, v in matriz.items()},
         "rangos": sorted(rangos, key=lambda x: x["rango"], reverse=True),
         "correlaciones": sorted(correlaciones, key=lambda x: x["r"], reverse=True),
+        "tamanos": tamanos,
     }
 
 
@@ -262,14 +277,26 @@ def main() -> None:
             f"{fila['n']:7d} {fila['pct']:6.2f}%"
         )
 
+    q1_animalia = pregunta_1(db, kingdom="Animalia")
+    print("\nPregunta 1 · solo Animalia")
+    for fila in q1_animalia["filas"]:
+        print(
+            f"{fila['source']:10s} {fila['orden']:12s} "
+            f"{fila['n']:7d} {fila['pct']:6.2f}%"
+        )
+    print("Totales Animalia:", q1_animalia["totales"])
+    print("Especies Animalia:", q1_animalia["especies"])
+
     q2 = pregunta_2(db, modo_prueba=False)
     print("\nPregunta 2 · rango por dinucleótido")
     for fila in q2["rangos"]:
         print(
             f"{fila['dinucleotido']}  R={fila['rango']:.4f}  "
             f"RR={fila['rango_relativo']:.4f}  "
-            f"min={fila['orden_min']} ({fila['min']:.4f})  "
-            f"max={fila['orden_max']} ({fila['max']:.4f})"
+            f"min={fila['orden_min']} ({fila['min']:.4f}, "
+            f"n={fila['n_orden_min']})  "
+            f"max={fila['orden_max']} ({fila['max']:.4f}, "
+            f"n={fila['n_orden_max']})"
         )
     print("\nCorrelaciones más altas")
     for fila in q2["correlaciones"][:10]:

@@ -293,10 +293,13 @@ Python. Ninguna modifica el modelo de datos.
 **Estado.** Ejecutadas sobre el respaldo completo de la base. La pregunta 1 encontró
 31.592 secuencias de Dfam y 208.354 de RM2+MCH, con composiciones distintas (Dfam: TIR
 36,77 % y LTR 34,77 %; RM2+MCH: LTR 52,02 % y LINE 30,10 %), pero confundidas con el reino:
-Dfam es 99,88 % Animalia. La pregunta 2 encontró que TT, GG, AA, AT y CC son los
-dinucleótidos de mayor rango, y que TIR–HELITRON (0,982) y LTR–LINE (0,962) forman los
-pares de órdenes más parecidos. Resultados en `paper/borrador.md` §IV-E; el cálculo se
-reproduce con `notebooks/preguntas_propias.py`.
+Dfam es 99,88 % Animalia. Al restringir la comparación a Animalia, el patrón TIR/SINE
+frente a LINE persiste, pero el sesgo residual por phylum y especie no desaparece. La
+pregunta 2 encontró que TT, GG, AA, AT y CC son los dinucleótidos de mayor rango, y que
+TIR–HELITRON (0,982) y LTR–LINE (0,962) forman los pares de órdenes más parecidos; los
+valores de borde y las correlaciones que dependen de MAVERICK (58 secuencias), CRYPTON
+(112) y RETROPOSON (113) son descriptivos y no estimaciones estables. Resultados en
+`paper/borrador.md` §IV-E; el cálculo se reproduce con `notebooks/preguntas_propias.py`.
 
 ### D-16 · Protocolo del benchmark e índices de `kmers` (2026-10-29)
 
@@ -318,7 +321,11 @@ calentamiento y tres repeticiones por consulta, reporta la mediana de
 
 **Consecuencias.** El orden README §6.4 → §6.5 deja de fallar y la unicidad de
 `{id_seq, k}` queda garantizada. Si el notebook se interrumpe después de eliminar los
-índices, hay que volver a ejecutarlo o correr `indices.js` antes de usar la base.
+índices, hay que volver a ejecutarlo o correr `indices.js` antes de usar la base. La
+corrida preliminar no permite concluir que Q3 empeore con índice: la diferencia de A
+(569 → 555 ms) es de 2,5 % y la de B (535 → 1.217 ms) puede deberse al `FETCH` de
+documentos de 33,5 KB; sin `totalDocsExamined`/`totalKeysExamined` es una hipótesis. La
+tabla definitiva debe salir de la corrida completa del notebook.
 
 ### D-17 · Consultas 10–14, bibliotecas y control de calidad (2026-10-29)
 
@@ -338,7 +345,9 @@ modifica documentos.
 archivo de GitHub y se generan localmente con la misma función. Las 44 entradas que no son
 especie se conservan en el corpus y la consulta 4 las excluye cuando el análisis pide
 especies. Los conteos de control son 0 huérfanos, 0 duplicados, 0 longitudes inválidas y
-0 caracteres inválidos; 54.837 secuencias (22,85 %) contienen al menos una `N`.
+0 caracteres inválidos; 54.837 secuencias (22,85 %) contienen al menos una `N`. La etiqueta
+`Angiosperma` (418 especies, 116.441 secuencias) se conserva como `Phylum` aunque no sea un
+phylum; el hallazgo se documenta en §IV-A y no se reasigna en la base.
 
 **Evidencia.** Notebook `02`, celdas de las consultas 10–14; `notebooks/consultas_analiticas.py`;
 `libraries/Malus_domestica.fasta`; `libraries/Fungi.fasta`; y tabla VI del artículo.
