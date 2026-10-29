@@ -211,7 +211,7 @@ def consulta_03(db, modo_prueba: bool = True, tamano_muestra: int = TAMANO_MUEST
                 "as": "taxon",
             }
         },
-        {"$unwind": "$taxon"},
+        {"$unwind": {"path": "$taxon", "preserveNullAndEmptyArrays": True}},
         {
             "$project": {
                 "_id": 0,
@@ -312,11 +312,25 @@ def consulta_03(db, modo_prueba: bool = True, tamano_muestra: int = TAMANO_MUEST
 
 
 def consulta_04(db, modo_prueba: bool = True, tamano_muestra: int = TAMANO_MUESTRA):
-    """Obtiene las diez especies con más y con menos secuencias."""
+    """Obtiene las diez especies con más y con menos secuencias.
+
+    Solo considera entradas cuyo ``es_especie`` es verdadero en ``species``;
+    así se excluyen grupos taxonómicos como ``Homininae`` o ``Metazoa``.
+    """
 
     coleccion = db["sequences"]
     pipeline = _inicio(modo_prueba, tamano_muestra)
     pipeline += [
+        {
+            "$lookup": {
+                "from": "species",
+                "localField": "species_id",
+                "foreignField": "_id",
+                "as": "taxon",
+            }
+        },
+        {"$unwind": "$taxon"},
+        {"$match": {"taxon.es_especie": True}},
         {"$group": {"_id": "$especie", "cantidad_te": {"$sum": 1}}},
         {
             "$facet": {
@@ -545,7 +559,7 @@ def consulta_08(
                 "as": "taxon",
             }
         },
-        {"$unwind": "$taxon"},
+        {"$unwind": {"path": "$taxon", "preserveNullAndEmptyArrays": True}},
         {
             "$project": {
                 "_id": 0,
