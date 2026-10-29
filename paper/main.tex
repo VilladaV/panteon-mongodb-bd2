@@ -26,6 +26,10 @@
 \usepackage{booktabs}          % tablas limpias, sin líneas verticales
 \usepackage{url}
 
+% ------------------------- Diagramas (TikZ) --------------------------
+\usepackage{tikz}
+\usetikzlibrary{shapes.multipart, positioning, arrows.meta}
+
 % ------------------------- Hipervínculos (al final) ------------------
 \usepackage[hidelinks]{hyperref}
 
@@ -122,6 +126,83 @@ modelado de datos, MongoDB
 % Uso de _id ObjectId + identificador original indexado.
 % $jsonSchema: en qué colecciones y por qué.
 % Tabla de índices: índice -> consulta que lo justifica.
+% [Texto pendiente: se migra desde paper/borrador.md, sección III-B.]
+
+\begin{figure*}[t]
+\centering
+\begin{tikzpicture}[
+  font=\footnotesize\ttfamily,
+  coll/.style={
+    rectangle split, rectangle split parts=2,
+    draw=black!75, rounded corners=3pt, line width=0.7pt,
+     rectangle split part fill={black!8, white},
+    text width=5.1cm, align=left, inner sep=4pt,
+    execute at begin node={\setlength{\rightskip}{0pt}}
+  },
+  refarrow/.style={-{Latex[length=2.5mm, width=2mm]}, thick, draw=black!80}
+]
+
+% Colección 1: species
+\node[coll] (species) {
+  \textbf{species} \hfill \normalfont\scriptsize (2.790 docs)
+  \nodepart{second}
+  \_id: ObjectId \hfill \textbf{[PK]}\\
+  especie: string \hfill \textbf{[UK]}\\
+  es\_especie: bool\\
+  \textbf{taxonomy:} \{ \hfill \textit{[embedded]}\\
+  \quad kingdom: string\\
+  \quad phylum: string | null\\
+  \quad tax\_class: string | null\\
+  \quad tax\_order: string | null\\
+  \quad family: string | null \}\\
+  \textbf{library\_origin:} \{ \hfill \textit{[embedded]}\\
+  \quad source: string\\
+  \quad source\_2: string | null\\
+  \quad notes: string | null \}
+};
+
+% Colección 2: sequences
+\node[coll, right=0.9cm of species] (sequences) {
+  \textbf{sequences} \hfill \normalfont\scriptsize (239.946 docs)
+  \nodepart{second}
+  \_id: ObjectId \hfill \textbf{[PK]}\\
+  id\_seq: string \hfill \textbf{[UK]}\\
+  species\_id: ObjectId \hfill \textbf{[FK]}\\
+  especie: string \hfill \textit{[ext. ref]}\\
+  kingdom: string \hfill \textit{[ext. ref]}\\
+  \textbf{te\_classification:} \{ \hfill \textit{[embedded]}\\
+  \quad clase\_fasta: string\\
+  \quad orden\_fasta: string\\
+  \quad superfamilia\_fasta: string \}\\
+  \textbf{metrics:} \{ \hfill \textit{[embedded]}\\
+  \quad longitud: int\\
+  \quad n\_count, gc\_count: int\\
+  \quad pct\_n, pct\_gc: double \}\\
+  secuencia: string
+};
+
+% Colección 3: kmers
+\node[coll, right=0.9cm of sequences] (kmers) {
+  \textbf{kmers} \hfill \normalfont\scriptsize (1.439.676 docs)
+  \nodepart{second}
+  \_id: ObjectId \hfill \textbf{[PK]}\\
+  sequence\_id: ObjectId \hfill \textbf{[FK]}\\
+  id\_seq: string \hfill \textbf{[UK(k)]}\\
+  k: int (1..6) \hfill \textbf{[UK(k)]}\\
+  valid\_windows: int\\
+  \textbf{counts:} \{ \hfill \textit{[sparse dict]}\\
+  \quad "<kmer>": int ($>0$)\\
+  \}
+};
+
+% Relaciones 1:N
+\draw[refarrow] (sequences.west) -- node[above, font=\scriptsize\sffamily] {1 : N} (species.east);
+\draw[refarrow] (kmers.west) -- node[above, font=\scriptsize\sffamily] {1 : N} (sequences.east);
+
+\end{tikzpicture}
+\caption{Diagrama del modelo documental híbrido en MongoDB. Se indican las llaves primarias (\texttt{\_id}), índices únicos (\texttt{UK}), referencias por \texttt{ObjectId} (\texttt{FK}), campos desnormalizados bajo el patrón \textit{extended reference} (\texttt{ext. ref}) y subdocumentos embebidos.}
+\label{fig:modelo_datos}
+\end{figure*}
 
 \subsection{Pipeline de procesamiento}
 % Etapas, procesamiento por lotes, inserciones masivas, idempotencia
