@@ -35,7 +35,7 @@ Línea de base del problema:
 
 | Integrante                     | Parte                                                     | Estado   |
 | ------------------------------ | --------------------------------------------------------- | -------- |
-| María Camila Prada Cortes      | 1 · Limpieza, cruce, consultas 10–14, bibliotecas y preguntas propias | En curso |
+| María Camila Prada Cortes      | 1 · Limpieza, cruce, consultas 10–14, bibliotecas y preguntas propias | Listo    |
 | Santiago Jimenez Cotrini       | 2 · Motor de *k*-mers, carga y consulta 15                | Listo    |
 | Cristian Camilo Arenas Salazar | 3 · Consultas 1–9 y figuras                               | Listo    |
 | Johan Andrés Villada Valencia  | 4 · Modelo de datos, repositorio y artículo               | En curso |
@@ -78,6 +78,8 @@ panteon-mongodb-bd2/
 │   ├── migrar_especie_original.py
 │   └── especies_originales.csv
 ├── libraries/                         # 6 · bibliotecas .fasta (consultas 10 y 11)
+│   ├── Malus_domestica.fasta
+│   ├── Fungi.fasta
 │   └── README.md
 │
 ├── paper/                             # 7 · artículo
@@ -100,14 +102,16 @@ panteon-mongodb-bd2/
 | Notebook                                            | Contenido mínimo exigido por la guía                                                                                                                                                                                    |
 | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `01_exploracion_limpieza_normalizacion_cruce.ipynb` | Lectura y validación del FASTA (encabezado, caracteres válidos, `N`, longitudes) · limpieza del CSV (9 columnas) · cruce por especie y reporte de huérfanos en ambos sentidos · atributos derivados (longitud, %GC, %N) |
-| `02_consultas_y_figuras.ipynb`                      | Consultas 1–9 y 15, cada una con pregunta, código, resultado e interpretación · bloque reservado para las consultas 10–14 (pendiente, parte 1) · las 4 figuras de la §4.5 leídas desde MongoDB |
+| `02_consultas_y_figuras.ipynb`                      | Consultas 1–15, cada una con pregunta, código, resultado e interpretación · bibliotecas `.fasta` de las consultas 10 y 11 · las 4 figuras de la §4.5 leídas desde MongoDB |
 | `03_experimentos_diseno.ipynb`                      | Dos estrategias de almacenamiento de *k*-mers · `collStats` · `explain("executionStats")` con tres repeticiones y mediana · tablas y gráficos comparativos |
 
 Las consultas 10–14 (bibliotecas `.fasta` por especie y reino, `$lookup`, comparación
-Dfam vs. RM2+MCH y control de calidad) están pendientes y las aporta la parte 1; el
-notebook 02 deja el bloque reservado antes de la consulta 15. La consulta 15 y las dos
-preguntas propias están ejecutadas; los resultados de las preguntas están en
-`paper/borrador.md` §IV-E y se recalculan con `notebooks/preguntas_propias.py`.
+Dfam vs. RM2+MCH y control de calidad) están implementadas en el notebook 02 y en
+`notebooks/consultas_analiticas.py`. Las bibliotecas de ejemplo quedaron en
+`libraries/Malus_domestica.fasta` (1.627 secuencias) y `libraries/Fungi.fasta`
+(19.797 secuencias). La consulta 15 y las dos preguntas propias también están ejecutadas;
+los resultados de las preguntas están en `paper/borrador.md` §IV-E y se recalculan con
+`notebooks/preguntas_propias.py`.
 
 
 ---
@@ -179,7 +183,7 @@ jupyter lab
 Abrir y ejecutar en orden:
 
 1. `01_exploracion_limpieza_normalizacion_cruce.ipynb`: lee `../data_raw/`, limpia, cruza, calcula los *k*-mers y carga `panteon_db`.
-2. `02_consultas_y_figuras.ipynb`: ejecuta las consultas y genera las cuatro figuras en `../paper/figures/`.
+2. `02_consultas_y_figuras.ipynb`: ejecuta las consultas, genera las bibliotecas en `../libraries/` y las cuatro figuras en `../paper/figures/`.
 3. `03_experimentos_diseno.ipynb`: elimina los índices secundarios de `kmers`, mide las tres consultas con y sin índice, construye la estrategia B, deja nuevamente los índices de producción y exporta `benchmark_tiempos` y `benchmark_espacio` a `paper/figures/`.
 4. `python preguntas_propias.py`: recalcula las dos preguntas de la §IV-E desde MongoDB.
 

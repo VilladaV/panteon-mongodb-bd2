@@ -320,6 +320,29 @@ calentamiento y tres repeticiones por consulta, reporta la mediana de
 `{id_seq, k}` queda garantizada. Si el notebook se interrumpe después de eliminar los
 índices, hay que volver a ejecutarlo o correr `indices.js` antes de usar la base.
 
+### D-17 · Consultas 10–14, bibliotecas y control de calidad (2026-10-29)
+
+**Contexto.** Las consultas 10–14 cubren la exportación de bibliotecas `.fasta`, la unión
+con la taxonomía, la comparación por `Source` y un control de calidad definido por el
+equipo. La guía no fija los controles exactos de la consulta 14 ni el tamaño de las
+bibliotecas que se versionan.
+
+**Decisión.** Las consultas 10 y 11 escriben el FASTA por streaming, filtran por `especie`
+o `kingdom` y reconstruyen el encabezado con `especie_original`. Se versionan
+`Malus_domestica.fasta` (1.627 secuencias, 6,6 MB) y `Fungi.fasta` (19.797 secuencias,
+74,0 MB). La consulta 14 comprueba referencias huérfanas, `id_seq` duplicados, longitudes
+inválidas, caracteres fuera de `{A,C,G,T,N}`, especies sin secuencias y contenido `N`; no
+modifica documentos.
+
+**Consecuencias.** Las bibliotecas de Plantae y Animalia superan el límite de 100 MB por
+archivo de GitHub y se generan localmente con la misma función. Las 44 entradas que no son
+especie se conservan en el corpus y la consulta 4 las excluye cuando el análisis pide
+especies. Los conteos de control son 0 huérfanos, 0 duplicados, 0 longitudes inválidas y
+0 caracteres inválidos; 54.837 secuencias (22,85 %) contienen al menos una `N`.
+
+**Evidencia.** Notebook `02`, celdas de las consultas 10–14; `notebooks/consultas_analiticas.py`;
+`libraries/Malus_domestica.fasta`; `libraries/Fungi.fasta`; y tabla VI del artículo.
+
 ---
 
 ## 6. Plantilla para nuevas entradas

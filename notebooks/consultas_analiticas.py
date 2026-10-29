@@ -1,4 +1,4 @@
-"""Implementación reutilizable de las consultas analíticas 1--9.
+"""Implementación reutilizable de las consultas analíticas 1--15.
 
 El notebook 02 conserva la presentación y la interpretación de cada consulta,
 mientras que este módulo concentra los pipelines de MongoDB para que la misma
@@ -7,6 +7,7 @@ lógica se pueda ejecutar en modo muestra o sobre toda la colección.
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from pymongo import MongoClient
@@ -39,6 +40,44 @@ def _envolver(resultado: Any, modo_prueba: bool, tamano_muestra: int) -> dict[st
         "modo": "MUESTRA" if modo_prueba else "BASE COMPLETA",
         "documentos_analizados": tamano_muestra if modo_prueba else "todos",
         "resultado": resultado,
+    }
+
+
+def _encabezado_fasta(documento: dict[str, Any]) -> str:
+    """Reconstruye el encabezado del FASTA de PanTEon."""
+
+    clasificacion = documento.get("te_classification") or {}
+    clase = clasificacion.get("clase_fasta") or ""
+    orden = clasificacion.get("orden_fasta") or ""
+    superfamilia = clasificacion.get("superfamilia_fasta") or ""
+    especie = documento.get("especie_original") or documento.get("especie") or ""
+    return f">{documento.get('id_seq', '')}#{clase}/{orden}/{superfamilia} @{especie}"
+
+
+def _escribir_fasta(documentos, ruta_salida: str | Path) -> int:
+    """Escribe documentos de ``sequences`` en formato FASTA y devuelve el conteo."""
+
+    ruta = Path(ruta_salida)
+    ruta.parent.mkdir(parents=True, exist_ok=True)
+    exportadas = 0
+    with ruta.open("w", encoding="utf-8", newline="\n") as archivo:
+        for documento in documentos:
+            archivo.write(_encabezado_fasta(documento) + "\n")
+            secuencia = documento.get("secuencia") or ""
+            for inicio in range(0, len(secuencia), 80):
+                archivo.write(secuencia[inicio : inicio + 80] + "\n")
+            exportadas += 1
+    return exportadas
+
+
+def _proyecto_biblioteca() -> dict[str, Any]:
+    return {
+        "_id": 0,
+        "id_seq": 1,
+        "especie": 1,
+        "especie_original": {"$ifNull": ["$especie_original", "$especie"]},
+        "te_classification": 1,
+        "secuencia": 1,
     }
 
 
@@ -651,6 +690,330 @@ def consulta_09(
         tamano_muestra,
     )
 
+
+def consulta_10(
+    db,
+    modo_prueba: bool = True,
+    tamano_muestra: int = TAMANO_MUESTRA,
+    especie: str | None = None,
+    ruta_salida: str | Path | None = None,
+):
+    """Exporta la biblioteca FASTA de una especie."""
+
+    coleccion = db["sequences"]
+    especie = especie or "Malus domestica"
+    pipeline = [{"$match": {"especie": especie}}]
+    if modo_prueba:
+        pipeline.append({"$sample": {"size": tamano_muestra}})
+    pipeline += [
+        {"$sort": {"id_seq": 1}},
+        {"$project": _proyecto_biblioteca()},
+    ]
+
+    if ruta_salida is not None:
+        exportadas = _escribir_fasta(
+            coleccion.aggregate(pipeline, allowDiskUse=True), ruta_salida
+        )
+        return _envolver(
+            {
+                "especie": especie,
+                "ruta": str(ruta_salida),
+                "secuencias_exportadas": exportadas,
+            },
+            modo_prueba,
+            tamano_muestra,
+        )
+
+    documentos = list(coleccion.aggregate(pipeline, allowDiskUse=True))
+    return _envolver(
+        {"especie": especie, "secuencias": documentos},
+        modo_prueba,
+        tamano_muestra,
+    )
+
+
+def consulta_11(
+    db,
+    modo_prueba: bool = True,
+    tamano_muestra: int = TAMANO_MUESTRA,
+    kingdom: str | None = None,
+    ruta_salida: str | Path | None = None,
+):
+    """Exporta la biblioteca FASTA de un reino."""
+
+    coleccion = db["sequences"]
+    kingdom = kingdom or "Fungi"
+    pipeline = [{"$match": {"kingdom": kingdom}}]
+    if modo_prueba:
+        pipeline.append({"$sample": {"size": tamano_muestra}})
+    pipeline += [
+        {"$sort": {"id_seq": 1}},
+        {"$project": _proyecto_biblioteca()},
+    ]
+
+    if ruta_salida is not None:
+        exportadas = _escribir_fasta(
+            coleccion.aggregate(pipeline, allowDiskUse=True), ruta_salida
+        )
+        return _envolver(
+            {
+                "kingdom": kingdom,
+                "ruta": str(ruta_salida),
+                "secuencias_exportadas": exportadas,
+            },
+            modo_prueba,
+            tamano_muestra,
+        )
+
+    documentos = list(coleccion.aggregate(pipeline, allowDiskUse=True))
+    return _envolver(
+        {"kingdom": kingdom, "secuencias": documentos},
+        modo_prueba,
+        tamano_muestra,
+    )
+
+
+def consulta_12(
+    db,
+    modo_prueba: bool = True,
+    tamano_muestra: int = TAMANO_MUESTRA,
+    limite: int = 5,
+):
+    """Une secuencias con la taxonomía de su especie mediante ``$lookup``."""
+
+    coleccion = db["sequences"]
+    pipeline = _inicio(modo_prueba, tamano_muestra)
+    pipeline += [
+        {
+            "$lookup": {
+                "from": "species",
+                "localField": "species_id",
+                "foreignField": "_id",
+                "as": "taxon",
+            }
+        },
+        {"$unwind": {"path": "$taxon", "preserveNullAndEmptyArrays": True}},
+        {"$sort": {"id_seq": 1}},
+        {"$limit": limite},
+        {
+            "$project": {
+                "_id": 0,
+                "id_seq": 1,
+                "especie": 1,
+                "especie_original": {"$ifNull": ["$especie_original", "$especie"]},
+                "taxonomy": {
+                    "kingdom": "$taxon.taxonomy.kingdom",
+                    "phylum": "$taxon.taxonomy.phylum",
+                    "tax_class": "$taxon.taxonomy.tax_class",
+                    "tax_order": "$taxon.taxonomy.tax_order",
+                    "family": "$taxon.taxonomy.family",
+                },
+            }
+        },
+    ]
+    muestra = list(coleccion.aggregate(pipeline, allowDiskUse=True))
+    total = coleccion.count_documents({"species_id": {"$ne": None}})
+    return _envolver(
+        {
+            "secuencias_con_taxonomia": total,
+            "muestra": muestra,
+        },
+        modo_prueba,
+        tamano_muestra,
+    )
+
+
+def consulta_13(
+    db,
+    modo_prueba: bool = True,
+    tamano_muestra: int = TAMANO_MUESTRA,
+):
+    """Compara especies, secuencias y longitud promedio por ``Source``."""
+
+    coleccion = db["sequences"]
+    pipeline = _inicio(modo_prueba, tamano_muestra)
+    pipeline += [
+        {
+            "$lookup": {
+                "from": "species",
+                "localField": "species_id",
+                "foreignField": "_id",
+                "as": "taxon",
+            }
+        },
+        {"$unwind": "$taxon"},
+        {
+            "$group": {
+                "_id": "$taxon.library_origin.source",
+                "especies": {"$addToSet": "$taxon._id"},
+                "secuencias": {"$sum": 1},
+                "longitud_total": {"$sum": "$metrics.longitud"},
+            }
+        },
+        {
+            "$project": {
+                "_id": 0,
+                "source": "$_id",
+                "especies": {"$size": "$especies"},
+                "secuencias": 1,
+                "promedio_secuencias_por_especie": {
+                    "$divide": ["$secuencias", {"$size": "$especies"}]
+                },
+                "longitud_promedio": {
+                    "$divide": ["$longitud_total", "$secuencias"]
+                },
+            }
+        },
+        {"$sort": {"source": 1}},
+    ]
+    resultado = list(coleccion.aggregate(pipeline, allowDiskUse=True))
+    return _envolver(resultado, modo_prueba, tamano_muestra)
+
+
+def _conteo(cursor) -> int:
+    fila = next(cursor, None)
+    return fila["n"] if fila else 0
+
+
+def consulta_14(
+    db,
+    modo_prueba: bool = True,
+    tamano_muestra: int = TAMANO_MUESTRA,
+):
+    """Ejecuta controles de calidad sobre ``sequences`` y ``species``."""
+
+    secuencias = db["sequences"]
+    especies = db["species"]
+    total = secuencias.count_documents({})
+
+    sin_species_id = secuencias.count_documents(
+        {"$or": [{"species_id": {"$exists": False}}, {"species_id": None}]}
+    )
+    longitudes_invalidas = secuencias.count_documents(
+        {"metrics.longitud": {"$lte": 0}}
+    )
+    caracteres_invalidos = secuencias.count_documents(
+        {"secuencia": {"$regex": "[^ACGTN]"}}
+    )
+    con_n = secuencias.count_documents({"secuencia": {"$regex": "N"}})
+
+    duplicados = _conteo(
+        secuencias.aggregate(
+            [
+                {"$group": {"_id": "$id_seq", "n": {"$sum": 1}}},
+                {"$match": {"n": {"$gt": 1}}},
+                {"$count": "n"},
+            ]
+        )
+    )
+    taxonomia_faltante = _conteo(
+        secuencias.aggregate(
+            [
+                {
+                    "$lookup": {
+                        "from": "species",
+                        "localField": "species_id",
+                        "foreignField": "_id",
+                        "as": "taxon",
+                    }
+                },
+                {"$match": {"taxon": {"$size": 0}}},
+                {"$count": "n"},
+            ]
+        )
+    )
+    especies_sin_secuencias = _conteo(
+        especies.aggregate(
+            [
+                {
+                    "$lookup": {
+                        "from": "sequences",
+                        "localField": "_id",
+                        "foreignField": "species_id",
+                        "as": "secuencias",
+                    }
+                },
+                {"$match": {"secuencias": {"$size": 0}}},
+                {"$count": "n"},
+            ]
+        )
+    )
+    no_especies = especies.count_documents({"es_especie": False})
+    secuencias_no_especie = _conteo(
+        secuencias.aggregate(
+            [
+                {
+                    "$lookup": {
+                        "from": "species",
+                        "localField": "species_id",
+                        "foreignField": "_id",
+                        "as": "taxon",
+                    }
+                },
+                {"$unwind": "$taxon"},
+                {"$match": {"taxon.es_especie": False}},
+                {"$count": "n"},
+            ]
+        )
+    )
+    longitud = next(
+        secuencias.aggregate(
+            [
+                {
+                    "$group": {
+                        "_id": None,
+                        "minima": {"$min": "$metrics.longitud"},
+                        "maxima": {"$max": "$metrics.longitud"},
+                        "promedio": {"$avg": "$metrics.longitud"},
+                    }
+                }
+            ]
+        ),
+        {"minima": None, "maxima": None, "promedio": None},
+    )
+    pct_n = next(
+        secuencias.aggregate(
+            [{"$group": {"_id": None, "promedio": {"$avg": "$metrics.pct_n"}}}]
+        ),
+        {"promedio": None},
+    )
+    por_reino = list(
+        secuencias.aggregate(
+            [
+                {"$group": {"_id": "$kingdom", "n": {"$sum": 1}}},
+                {"$sort": {"n": -1}},
+            ]
+        )
+    )
+
+    return _envolver(
+        {
+            "secuencias": total,
+            "especies": especies.count_documents({}),
+            "especies_validas": especies.count_documents({"es_especie": True}),
+            "entradas_no_especie": no_especies,
+            "secuencias_no_especie": secuencias_no_especie,
+            "sin_species_id": sin_species_id,
+            "taxonomia_faltante": taxonomia_faltante,
+            "especies_sin_secuencias": especies_sin_secuencias,
+            "id_seq_duplicados": duplicados,
+            "longitudes_invalidas": longitudes_invalidas,
+            "caracteres_invalidos": caracteres_invalidos,
+            "con_n": con_n,
+            "pct_con_n": round(100 * con_n / total, 2) if total else 0,
+            "pct_n_promedio": pct_n.get("promedio"),
+            "longitud": {
+                "minima": longitud.get("minima"),
+                "maxima": longitud.get("maxima"),
+                "promedio": longitud.get("promedio"),
+            },
+            "por_reino": por_reino,
+        },
+        modo_prueba,
+        tamano_muestra,
+    )
+
+
 def consulta_15(
     db,
     modo_prueba: bool = True,
@@ -703,6 +1066,14 @@ def consulta_15(
         tamano_muestra,
     )
 
+
+CONSULTAS_10_14 = {
+    10: consulta_10,
+    11: consulta_11,
+    12: consulta_12,
+    13: consulta_13,
+    14: consulta_14,
+}
 
 CONSULTAS_01_09 = {
     1: consulta_01,
