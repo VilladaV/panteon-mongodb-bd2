@@ -122,7 +122,8 @@ pip install pymongo pandas biopython numpy matplotlib seaborn
 
 - Python ≥ 3.10
 - MongoDB ≥ 7.0 (servidor local o instancia accesible)
-- Entorno previsto: **Google Colab** (autorizado por el docente) o local
+- Entorno de ejecución: **local con Anaconda y Jupyter**.
+- Equipo de referencia: AMD Ryzen 3 3200G (4 núcleos/4 hilos), 16 GB de RAM, dos HDD SATA de 1 TB y Windows 10 Pro de 64 bits
 
 ### 6.2 Descargar los datos
 
