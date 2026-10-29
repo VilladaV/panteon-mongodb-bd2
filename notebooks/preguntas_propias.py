@@ -136,6 +136,60 @@ def pregunta_1(db) -> dict[str, object]:
     }
 
 
+def pregunta_1_especies(db) -> list[dict]:
+    """Composición por orden dentro de cada fuente, solo con `es_especie = true`.
+
+    Reproduce la restricción que se cita en la §IV-E: elimina los 44 grupos
+    taxonómicos que no son especie antes de agrupar.
+    """
+
+    pipeline = [
+        {
+            "$lookup": {
+                "from": "species",
+                "localField": "species_id",
+                "foreignField": "_id",
+                "as": "sp",
+            }
+        },
+        {"$unwind": {"path": "$sp", "preserveNullAndEmptyArrays": True}},
+        {"$match": {"sp.es_especie": True}},
+        {
+            "$group": {
+                "_id": {
+                    "source": "$sp.library_origin.source",
+                    "orden": "$te_classification.orden_fasta",
+                },
+                "n": {"$sum": 1},
+            }
+        },
+        {
+            "$group": {
+                "_id": "$_id.source",
+                "total": {"$sum": "$n"},
+                "ordenes": {"$push": {"orden": "$_id.orden", "n": "$n"}},
+            }
+        },
+        {"$unwind": "$ordenes"},
+        {
+            "$project": {
+                "_id": 0,
+                "source": "$_id",
+                "orden": "$ordenes.orden",
+                "n": "$ordenes.n",
+                "pct": {
+                    "$multiply": [
+                        {"$divide": ["$ordenes.n", "$total"]},
+                        100,
+                    ]
+                },
+            }
+        },
+        {"$sort": {"source": 1, "pct": -1}},
+    ]
+    return list(db["sequences"].aggregate(pipeline, allowDiskUse=True))
+
+
 def pregunta_2(db, modo_prueba: bool = False) -> dict[str, object]:
     """Matriz orden × dinucleótido, rangos y correlaciones."""
 
@@ -146,17 +200,24 @@ def pregunta_2(db, modo_prueba: bool = False) -> dict[str, object]:
         j = DINUCLEOTIDOS.index(fila["dinucleotido"])
         matriz[fila["orden"]][j] = fila["frecuencia_promedio"]
 
+    ordenes = list(matriz)
     rangos = []
     for j, dinucleotido in enumerate(DINUCLEOTIDOS):
-        valores = np.array([matriz[o][j] for o in matriz])
+        valores = np.array([matriz[o][j] for o in ordenes])
         rango = float(valores.max() - valores.min())
         media = float(valores.mean())
+        i_min = int(valores.argmin())
+        i_max = int(valores.argmax())
         rangos.append(
             {
                 "dinucleotido": dinucleotido,
                 "rango": rango,
                 "rango_relativo": rango / media if media else 0.0,
                 "media": media,
+                "orden_min": ordenes[i_min],
+                "min": float(valores[i_min]),
+                "orden_max": ordenes[i_max],
+                "max": float(valores[i_max]),
             }
         )
 
@@ -194,12 +255,21 @@ def main() -> None:
     for fila in q1["por_reino"]:
         print(f"{fila['_id']['source']:10s} {fila['_id']['kingdom']:10s} {fila['n']:7d}")
 
+    print("\nPregunta 1 · solo es_especie = true")
+    for fila in pregunta_1_especies(db):
+        print(
+            f"{fila['source']:10s} {fila['orden']:12s} "
+            f"{fila['n']:7d} {fila['pct']:6.2f}%"
+        )
+
     q2 = pregunta_2(db, modo_prueba=False)
     print("\nPregunta 2 · rango por dinucleótido")
     for fila in q2["rangos"]:
         print(
             f"{fila['dinucleotido']}  R={fila['rango']:.4f}  "
-            f"RR={fila['rango_relativo']:.4f}"
+            f"RR={fila['rango_relativo']:.4f}  "
+            f"min={fila['orden_min']} ({fila['min']:.4f})  "
+            f"max={fila['orden_max']} ({fila['max']:.4f})"
         )
     print("\nCorrelaciones más altas")
     for fila in q2["correlaciones"][:10]:
