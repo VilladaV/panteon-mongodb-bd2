@@ -637,6 +637,58 @@ def consulta_09(
         tamano_muestra,
     )
 
+def consulta_15(
+    db,
+    modo_prueba: bool = True,
+    tamano_muestra: int = TAMANO_MUESTRA,
+    id_seq: str | None = None,
+    k: int | None = None,
+):
+    """Recupera el perfil de k-mers de una secuencia para un tamaño k dado."""
+
+    coleccion = db["kmers"]
+    if modo_prueba and (id_seq is None or k is None):
+        # Tomar una muestra aleatoria para asegurar que los parámetros existan
+        pipeline_muestra = [
+            {"$sample": {"size": 1}},
+            {"$project": {"id_seq": 1, "k": 1}},
+        ]
+        documentos = list(coleccion.aggregate(pipeline_muestra))
+        if documentos:
+            parametro = documentos[0]
+            id_seq = id_seq or parametro.get("id_seq")
+            k = k or parametro.get("k")
+
+    # Valores por defecto para ejecución directa sin modo_prueba
+    id_seq = id_seq or "PDB00000001"
+    k = k or 6
+
+    filtro = {"id_seq": id_seq, "k": k}
+
+    pipeline = [
+        {"$match": filtro},
+        {
+            "$project": {
+                "_id": 0,
+                "id_seq": 1,
+                "k": 1,
+                "valid_windows": 1,
+                "counts": 1,
+            }
+        },
+    ]
+    
+    resultado = list(coleccion.aggregate(pipeline))
+    return _envolver(
+        {
+            "id_seq": id_seq,
+            "k": k,
+            "perfil": resultado,
+        },
+        modo_prueba,
+        tamano_muestra,
+    )
+
 
 CONSULTAS_01_09 = {
     1: consulta_01,
@@ -648,6 +700,7 @@ CONSULTAS_01_09 = {
     7: consulta_07,
     8: consulta_08,
     9: consulta_09,
+    15: consulta_15,
 }
 
 # Alias conservado para no romper código que ya importe el nombre anterior.
